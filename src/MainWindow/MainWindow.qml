@@ -355,7 +355,7 @@ ApplicationWindow {
         visible:        false
     }
 
-    Loader {\n        id: apeCloudLoginLoader\n        anchors.fill: parent\n        z: 10000\n        source: "qrc:/qml/ApeCloud/Login.qml"\n    }\n\n    footer: LogReplayStatusBar {
+    Loader {\n        id: apeCloudLoginLoader\n        anchors.fill: parent\n        z: 10000\n        source: "qrc:/qml/ApeCloud/Login.qml"\n        onLoaded: item.hostWindow = mainWindow\n    }\n\n    footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
 
