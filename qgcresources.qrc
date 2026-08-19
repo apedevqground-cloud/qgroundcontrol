@@ -20,5 +20,11 @@
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>
+        <file alias="ApeLogoDark.svg">resources/branding/ape/ape-logo-dark.svg</file>
+        <file alias="ApeLogoLight.svg">resources/branding/ape/ape-logo-light.svg</file>
+        <file alias="ApeLogoSplash.svg">resources/branding/ape/ape-logo-splash.svg</file>
+    </qresource>
+    <qresource prefix="/qml/ApeCloud">
+        <file alias="Login.qml">src/MainWindow/ApeCloudLogin.qml</file>
     </qresource>
 </RCC>
