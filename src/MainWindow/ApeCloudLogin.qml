@@ -1,3 +1,4 @@
+// Ape QML shell - flight controls remain isolated
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
