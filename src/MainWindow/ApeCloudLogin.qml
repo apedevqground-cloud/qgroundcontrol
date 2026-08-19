@@ -8,7 +8,10 @@ Item {
     anchors.fill: parent
 
     property var hostWindow
-    property string apiBaseUrl: "https://api.example.invalid"
+    property string apiBaseUrl: "https://didactic-parakeet-vpqvvxw75wrv3p944-8000.app.github.dev"
+    property string accessToken: ""
+    property string userEmail: ""
+    property bool loginBusy: false
     property bool loggedIn: false
     property bool online: false
     property string selectedDrone: qsTr("No drone selected")
@@ -18,15 +21,96 @@ Item {
     readonly property color accentColor: "#ff8a00"
     readonly property color borderColor: "#34393c"
 
-    function mockLogin() {
+    function parseResponse(xhr) {
+        try {
+            return JSON.parse(xhr.responseText)
+        } catch (error) {
+            return null
+        }
+    }
+
+    function apiRequest(method, path, body, callback) {
+        var xhr = new XMLHttpRequest()
+        xhr.open(method, root.apiBaseUrl + path)
+        xhr.setRequestHeader("Accept", "application/json")
+        if (body !== null)
+            xhr.setRequestHeader("Content-Type", "application/json")
+        if (root.accessToken.length > 0)
+            xhr.setRequestHeader("Authorization", "Bearer " + root.accessToken)
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE)
+                callback(xhr.status, root.parseResponse(xhr))
+        }
+        xhr.send(body === null ? null : JSON.stringify(body))
+    }
+
+    function signIn() {
         errorText.text = ""
-        if (emailField.text.trim().length === 0 || passwordField.text.length < 8) {
+        var email = emailField.text.trim()
+        if (email.length === 0 || passwordField.text.length < 8) {
             errorText.text = qsTr("Enter a valid email and a password of at least 8 characters.")
             return
         }
-        loggedIn = true
-        online = true
-        heartbeatTimer.start()
+
+        root.loginBusy = true
+        root.apiRequest("POST", "/auth/login", {
+            email: email,
+            password: passwordField.text
+        }, function(status, response) {
+            passwordField.text = ""
+            if (status !== 200 || !response || !response.access_token) {
+                root.loginBusy = false
+                errorText.text = status === 401
+                    ? qsTr("Email or password is incorrect.")
+                    : qsTr("Ape Cloud is unavailable. Make sure the Codespace and port 8000 are running and public.")
+                return
+            }
+            root.accessToken = response.access_token
+            root.verifySession()
+        })
+    }
+
+    function verifySession() {
+        root.apiRequest("GET", "/auth/me", null, function(status, response) {
+            root.loginBusy = false
+            if (status !== 200 || !response || !response.email) {
+                root.accessToken = ""
+                errorText.text = qsTr("Ape Cloud could not verify this session.")
+                return
+            }
+            root.userEmail = response.email
+            root.loggedIn = true
+            root.online = true
+            root.loadDrones()
+            root.sendHeartbeat()
+            heartbeatTimer.start()
+        })
+    }
+
+    function loadDrones() {
+        root.apiRequest("GET", "/drones", null, function(status, response) {
+            if (status === 200 && response && response.length > 0)
+                root.selectedDrone = response[0].name
+        })
+    }
+
+    function sendHeartbeat() {
+        if (root.accessToken.length === 0)
+            return
+        root.apiRequest("POST", "/auth/heartbeat", {}, function(status, response) {
+            root.online = status === 200 && response && response.status === "online"
+            if (status === 401)
+                root.signOut()
+        })
+    }
+
+    function signOut() {
+        heartbeatTimer.stop()
+        root.accessToken = ""
+        root.userEmail = ""
+        root.online = false
+        root.loggedIn = false
+        root.selectedDrone = qsTr("No drone selected")
     }
 
     Timer {
@@ -34,7 +118,7 @@ Item {
         interval: root.heartbeatIntervalMs
         repeat: true
         running: false
-        onTriggered: root.online = true
+        onTriggered: root.sendHeartbeat()
     }
 
     Rectangle {
@@ -81,13 +165,14 @@ Item {
                     Layout.fillWidth: true
                     placeholderText: qsTr("Password")
                     echoMode: TextInput.Password
-                    onAccepted: root.mockLogin()
+                    onAccepted: root.signIn()
                 }
                 Button {
                     Layout.fillWidth: true
-                    text: qsTr("Sign In")
+                    text: root.loginBusy ? qsTr("Connecting…") : qsTr("Sign In")
                     highlighted: true
-                    onClicked: root.mockLogin()
+                    enabled: !root.loginBusy
+                    onClicked: root.signIn()
                 }
                 Label {
                     id: errorText
@@ -145,9 +230,19 @@ Item {
                 }
                 Item { Layout.fillWidth: true }
                 Label { text: Qt.formatTime(new Date(), "hh:mm:ss"); color: "white"; font.pixelSize: 16 }
+                Label {
+                    text: root.userEmail
+                    color: "#9da4a8"
+                    elide: Text.ElideRight
+                    Layout.maximumWidth: 220
+                }
                 Button {
                     text: qsTr("Classic QGC")
                     onClicked: root.visible = false
+                }
+                Button {
+                    text: qsTr("Sign Out")
+                    onClicked: root.signOut()
                 }
             }
         }
