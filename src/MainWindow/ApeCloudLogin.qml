@@ -8,7 +8,7 @@ Item {
     anchors.fill: parent
 
     property var hostWindow
-    property string apiBaseUrl: "https://ominous-garbanzo-4g77jggvxjx37xp9-8000.app.github.dev"
+    property string apiBaseUrl: "https://ominous-garbanzo-4g77jggvxjx37xp9-3000.app.github.dev/api"
     property string accessToken: ""
     property string userEmail: ""
     property bool loginBusy: false
