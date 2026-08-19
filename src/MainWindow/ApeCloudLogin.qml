@@ -8,7 +8,7 @@ Item {
     anchors.fill: parent
 
     property var hostWindow
-    property string apiBaseUrl: "https://ominous-garbanzo-4g77jggvxjx37xp9-3000.app.github.dev/api"
+    property string apiBaseUrl: "https://humble-potato-x9ww599pj5gfvr79-3000.app.github.dev/api"
     property string accessToken: ""
     property string userEmail: ""
     property bool loginBusy: false
@@ -62,7 +62,7 @@ Item {
                 root.loginBusy = false
                 errorText.text = status === 401
                     ? qsTr("Email or password is incorrect.")
-                    : qsTr("Ape Cloud is unavailable. Make sure the Codespace and port 8000 are running and public.")
+                    : qsTr("Ape Cloud web API is unavailable. Make sure the Codespace is running and port 3000 is public.")
                 return
             }
             root.accessToken = response.access_token
